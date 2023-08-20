@@ -18,7 +18,7 @@ import time
 
 
 def on_connect(client, userdata, flags, rc):
-  client.subscribe(topic_sub)
+  client.subscribe(topic_monitor)
 
 def on_message(client, userdata, msg):
   '''
@@ -35,6 +35,55 @@ def on_message(client, userdata, msg):
   # received_result = int(msg.payload)
   # print(f"Resultado recebido: {received_result}")
 
+
+'''
+ Função dedicada às ações de montagem de cada peça em um produto.
+ Considera-se que o operador indique a utilização de uma peça (dar baixa no estoque)
+ e utilize algum tempo para sua montagem no produto.
+'''
+def action_part(client, part_index):
+  estoque_pecas[part_index] -= 1
+  client.publish(topic_estoque, f"dc:{part_index}") 
+
+  # considera o tempo de montagem da peça
+  time.sleep(timer[part_index])
+  
+
+
+def production_line(client):
+  try:
+    while True:
+      print()
+      print("estoque:", [f"{value:02}" for value in estoque_pecas])
+      print("lista:  ", [f"{value:02}" for value in produto])
+      print()
+      print("iniciando montagem do produto 1")
+
+      for i in range(len(produto)):
+        if (produto[i] != 0):
+          print(f"- montagem da peça {i} ({produto[i]} un): ", end="")
+
+          for _ in range(produto[i]):
+            if (estoque_pecas[i] <= 0):
+              print(f"\n\nFALTA DE PEÇA: {i}")
+              print("LINHA DE PRODUÇÃO PARADA...")
+              while(estoque_pecas[i] <= 0):
+                pass
+            
+            else:
+              action_part(client, i)
+              print("#", end="")
+              sys.stdout.flush() 
+
+          print()
+
+  except KeyboardInterrupt:
+    print("\nEncerrando a linha de produção...")
+    client.loop_stop()
+    client.disconnect()
+  
+
+
 if __name__ == "__main__":
   client = mqtt.Client("fabrica1")
 
@@ -44,20 +93,6 @@ if __name__ == "__main__":
   client.connect("localhost", 1883, 60)
   client.loop_start()
 
-  while True:
-    print("iniciando montagem do produto 1")
+  production_line(client)
 
-    for i in range(len(produto)):
-      if (produto[i] != 0):
-        print(f"montagem da peça {i} ({produto[i]}un): ", end="")
-
-        for _ in range(produto[i]):
-          # avisa o uso de uma peça ao monitor
-          client.publish(topic_pub, f"dc:{i}")  
-          
-          # considera o tempo de montagem da peça
-          time.sleep(timer[i])
-          print("#", end="")
-          sys.stdout.flush() 
-
-        print()
+ 

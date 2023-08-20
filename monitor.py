@@ -13,17 +13,17 @@ from utils import *
 
 def on_connect(client, userdata, flags, rc):
     print("Cliente 2 conectado ao broker")
-    client.subscribe("topic/number")  # Se inscreve no tópico para receber números
+    client.subscribe(topic_estoque)  # Se inscreve no tópico para receber números
 
 def on_message(client, userdata, msg):
-    received_number = int(msg.payload)
-    multiplied_number = received_number * 2
-    print(f"Número recebido: {received_number}, Número multiplicado: {multiplied_number}")
-    client.publish("topic/result", str(multiplied_number))  # Publica o número multiplicado
+    received_number = msg.payload
+    print(received_number)
+    #client.publish(topic_monitor, str(multiplied_number))  # Publica o número multiplicado
 
-client = mqtt.Client("dashboard")
-client.on_connect = on_connect
-client.on_message = on_message
+if __name__ == "__main__":
+    client = mqtt.Client("monitor")
+    client.on_connect = on_connect
+    client.on_message = on_message
 
-client.connect("localhost", 1883, 60)
-client.loop_forever()
+    client.connect("localhost", 1883, 60)
+    client.loop_forever()
