@@ -15,6 +15,8 @@ max_stock_fabrica = 10
 
 # número de peças diferentes que a fábrica utiliza
 num_pecas = 10
+num_pecas_base = 7
+num_pecas_varia = 3
 
 # estoque de peças de uma linha de produção
 estoque_pecas = [10] * num_pecas
@@ -25,6 +27,13 @@ estoque_pecas_almoxarife = [20] * num_pecas
 # gera uma lista de peças utilizadas na montagem de um produto
 # por simplicidade, vamos considerar que cada peça deve ser utilizada na ordem de seu índice
 produto = [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas)]
+
+kit_base = [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas_base)]
+pv1 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas - num_pecas_base)]
+pv2 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas - num_pecas_base)]
+pv3 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas - num_pecas_base)]
+pv4 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas - num_pecas_base)]
+pv5 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 for _ in range(num_pecas - num_pecas_base)]
 
 # gera uma lista de tempo utilizado na montagem de cada peça do produto
 timer = [random.randint(1, 5)/10 for _ in range(num_pecas)]
