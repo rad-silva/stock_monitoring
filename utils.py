@@ -1,11 +1,11 @@
 import random
 
 # código para identificar operação destinatário no início do payload 
-ds_code = b'00001' # decrease stock
-sa_code = b'00010' # solicitação de reposição almoxarife
-sf_code = b'00100' # solicitação de reposição fornecedor 
-ra_code = b'01000' # resposta de de reposição almoxarife
-rf_code = b'10000' # resposta de de reposição forncedor
+ds_code = 1 # decrease stock
+sa_code = 2 # solicitação de reposição almoxarife
+sf_code = 3 # solicitação de reposição fornecedor 
+ra_code = 4 # resposta de de reposição almoxarife
+rf_code = 5 # resposta de de reposição forncedor
 
 # Tópicos para receber e enviar dados ao monitor
 topic_monitor = 'topic/monitor'
@@ -21,8 +21,16 @@ num_pecas_varia = 3
 # estoque de peças de uma linha de produção
 estoque_pecas = [10] * num_pecas
 
+estoque_fabrica = {
+  'l1' : [10] * num_pecas,
+  'l2' : [10] * num_pecas,
+  'l3' : [10] * num_pecas,
+  'l4' : [10] * num_pecas,
+  'l5' : [10] * num_pecas,
+}
+
 # estoque de peças do almoxarifado
-estoque_pecas_almoxarife = [20] * num_pecas
+estoque_almoxarifado = [20] * num_pecas
 
 # gera uma lista de peças utilizadas na montagem de um produto
 # por simplicidade, vamos considerar que cada peça deve ser utilizada na ordem de seu índice
@@ -43,7 +51,18 @@ almoxarife_threshold = 8
 production_threshold = 5
 
 # estoque de peças do almoxarifado
-solicita_almoxarifado = [0] * num_pecas
+# solicita_almoxarifado = [0] * num_pecas
 
 # estoque de peças do almoxarifado
 solicita_fornecedor= [0] * num_pecas
+
+solicita_almoxarifado = {
+  'l1' : [0] * num_pecas,
+  'l2' : [0] * num_pecas,
+  'l3' : [0] * num_pecas,
+  'l4' : [0] * num_pecas,
+  'l5' : [0] * num_pecas,
+}
+
+prod_name = ['pv1', 'pv2', 'pv3', 'pv4', 'pv5']
+produtos = [pv1, pv2, pv3, pv4, pv5]

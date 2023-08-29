@@ -10,34 +10,69 @@ Fábrica:
 - Se faltar pessa, toda a linha de produção para e um timer é iniciado para relatar o tempo ocioso
 - A fábrica trabalha durante 16 horas
 - Utilizamos os minutos dividido por 60 para fins de testes, ou seja, 1min = 1seg na aplicação
+- mensagens são transmitidas por tuplas no formato (remetente, destinatário, código, peça, quantidade)
 '''
 
 from utils import *
 import paho.mqtt.client as mqtt
+import threading
+import multiprocessing
 import time
 import sys
+import json
+
+
 
 class LinhaProducao:
-  def __init__(self, name, client):
+  def __init__(self, name):
     self.name = name
-    self.client = client
+    self.client = mqtt.Client(self.name)
+    self.client.on_connect = self.on_connect
+    self.client.on_message = self.on_message
+    self.client.connect("localhost", 1883, 60)
+
     self.estoque = [10] * num_pecas
 
-  
-  def action_part(self, part_index):
-    self.estoque[part_index] -= 1
-    self.client.publish(topic_estoque, f"{ds_code}:{part_index}") 
+    try:
+      self.client.loop_start()
+    except Exception as e:
+        self.client.loop_stop()
+        self.client.disconnect()
+        print(f"Conexão {self.name} encerrada!")
 
-    # considera o tempo de montagem da peça
-    time.sleep(timer[part_index])
+
+  def on_connect(self, client, userdata, flags, rc):
+    print(f"{self.name} conectado ao broker")
+    self.client.subscribe(topic_monitor)
+
+
+  # Função de callback para quando uma mensagem for recebida
+  def on_message(self, client, userdata, msg):
+    data_json = msg.payload.decode("utf-8")
+    remetente, destinatario, code, part_index, quantidade = json.loads(data_json)
+
+    if (code == ra_code and destinatario == self.name):
+      self.estoque[part_index] += quantidade
+      print(f'\n>> Recebido reposição: peça {part_index}, quantidade {quantidade}\n')
+
+
+  # Função de ação para montagem de peça em um produto
+  def action_part(self, part_index):
+    # atualiza o estoque local
+    self.estoque[part_index] -= 1
+
+    # serializa a tupla das informações da mensagem e envia pro monitor
+    data = json.dumps((self.name, "monitor", ds_code, part_index, 0))
+    self.client.publish(topic_estoque, data)
+
+    # considera um tempo de montagem da peça
+    time.sleep(random.random())
 
 
   def product_assembly(self, prod_name, produto, quantidade):
     for p in range(quantidade):
-      print(f"Montagem do produto {prod_name}: ({p}/{quantidade})")
-      # print("estoque:", [f"{value:02}" for value in estoque_pecas])
-      # print("lista:  ", [f"{value:02}" for value in produto], "\n")
-
+      print(f"\n{self.name} Montagem do produto {prod_name}: ({p}/{quantidade})")
+      
       for part_index in range(num_pecas): 
 
         # verfica se a peça 'part_index' é utilizada nesse produto
@@ -58,62 +93,43 @@ class LinhaProducao:
 
           print()
 
-    return quantidade
-
 
 class Fabrica:
   def __init__(self, name):
     self.name = name
-    self.client = mqtt.Client(self.name)
-    self.client.on_connect = self.on_connect
-    self.client.on_message = self.on_message
-    self.client.connect("localhost", 1883, 60)
-
-
-  def on_connect(self, client, userdata, flags, rc):
-    print(f"{self.name} conectado ao broker")
-    self.client.subscribe(topic_monitor)
-
-
-  def on_message(self, client, userdata, msg):
-    payload = msg.payload.decode("utf-8")
-    code, data = payload.split(':')
-    
-    if code == str(ra_code):
-      part_index, quantidade = data.split(',')
-      part_index = int(part_index)
-      quantidade = int(quantidade)
-
-      # atualiza os dados de estoque  da fábrica
-      self.linha1.estoque[part_index] += quantidade
-
-      print(f'\n>> Recebido reposição: peça {part_index}, quantidade {quantidade}\n')
-
 
   def administration(self):
-    total_produtos = 10
-    produtos_fabricados = 0
+    total_produtos = 5
 
-    self.linha1 = LinhaProducao("l1", self.client)
+    # cria as linhas de produção
+    self.linha1 = LinhaProducao("l1")
+    self.linha2 = LinhaProducao("l2")
+    self.linha3 = LinhaProducao("l3")
+    self.linha4 = LinhaProducao("l4")
+    self.linha5 = LinhaProducao("l5")
 
-    while produtos_fabricados < total_produtos:
-      produtos_fabricados += self.linha1.product_assembly("pv1", pv1, total_produtos)
+    linha_prod = [self.linha1, self.linha2, self.linha3, self.linha4, self.linha5]
+    threads = []
+
+    for i in range(len(linha_prod)):
+      thread = threading.Thread(target=linha_prod[i].product_assembly, args=(prod_name[i], produtos[i], total_produtos))
+      threads.append(thread)
+
+    # Coloca as linhas de produção para trabalharem simultaneamente
+    for thread in threads:
+      thread.start()
+
+    # Wait for all threads to finish
+    for thread in threads:
+      thread.join()
 
     print("\nProducao concluída!")
-    return
-
     
-  def start(self):
-    try:
-      self.client.loop_start()
-      self.administration()
-    except KeyboardInterrupt:
-      self.client.loop_stop()
-      self.client.disconnect()
-      print(f"\nconexão {self.name} encerrada!")
+    return
 
 
 #
-# Inicializa objeto do fabrica
-fabrica = Fabrica("fabrica")
-fabrica.start()
+#
+# Inicializa objeto da fabrica
+fabrica = Fabrica("fabrica1")
+fabrica.administration()

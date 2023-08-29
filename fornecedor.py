@@ -9,6 +9,7 @@ Fornecedor:
 
 from utils import *
 import paho.mqtt.client as mqtt
+import json
 import time
 
 
@@ -27,22 +28,20 @@ class Fornecedor:
 
 
   def on_message(self, client, userdata, msg):
-    payload = msg.payload.decode("utf-8")
-    code, data = payload.split(':')
-    
-    # recebeu uma mensagem de solicitação de reposição vinda do almoxarifado/monitor
-    if code == str(sf_code):
-      part_index, quantidade = data.split(",")
-      part_index = int(part_index)
-      quantidade = int(quantidade)
+    data_json = msg.payload.decode("utf-8")
+    remetente, destinatario, code, part_index, quantidade = json.loads(data_json)
 
+    # recebeu uma mensagem de solicitação de reposição vinda do almoxarifado/monitor
+    if code == sf_code:
       # Considera um tempo de entrega
-      time.sleep(random.randint(1,10))
+      time.sleep(random.randint(1,8))
 
       # envia resposta de entrega
-      self.client.publish(topic_estoque, f"{rf_code}:{part_index},{quantidade}") 
-      print(f" - envio de peça {part_index}, quantidade {quantidade}")
+      data = json.dumps((self.name, "almoxarifado", rf_code, part_index, quantidade))
+      self.client.publish(topic_estoque, data)
 
+      print(f"reposição peça {part_index}, quantidade {quantidade}")
+      
     
   def start(self):
     try:

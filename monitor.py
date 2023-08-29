@@ -11,6 +11,7 @@ Lembre-se de ativar o Mosquitto antes de executar a aplicação
 
 from utils import *
 import paho.mqtt.client as mqtt
+import json
 import time
 
 
@@ -22,6 +23,15 @@ class Monitor:
     self.client.on_message = self.on_message
     self.client.connect("localhost", 1883, 60)
 
+    # armazena o estoque local de cada linha de produção da fábrica 1
+    self.frabrica1 = {
+      'l1' : estoque_pecas,
+      'l2' : estoque_pecas,
+      'l3' : estoque_pecas,
+      'l4' : estoque_pecas,
+      'l5' : estoque_pecas,
+    }
+
 
   def on_connect(self, client, userdata, flags, rc):
     print(f"{self.name} conectado ao broker")
@@ -29,56 +39,58 @@ class Monitor:
 
 
   def on_message(self, client, userdata, msg):
-    payload = msg.payload.decode("utf-8")
-    code, data = payload.split(':')
+    data_json = msg.payload.decode("utf-8")
+    remetente, destinatario, code, part_index, quantidade = json.loads(data_json)
 
     # recebeu uma mensagem de utilização de peça vinda da fábrica (decrement stock)
-    if code == str(ds_code):
-        part_index = int(data)
-        estoque_pecas[part_index] -= 1
+    if code == ds_code:
+      self.frabrica1[remetente][part_index] -= 1
 
-        # Caso o estoque de alguma peça na linha de produção esteja baixo, envia
-        # uma mensagem solicitando reposição da peça {part_index} para o almoxarifado
-        if(estoque_pecas[part_index] < production_threshold and not solicita_almoxarifado[part_index]):
-            print(f'> Estoque da peça {part_index} baixo -> pedido de reposição para o almoxarifado\n')
-            solicita_almoxarifado[part_index] = 1
-            self.client.publish(topic_monitor, f"{sa_code}:{part_index}")
+      # Caso o estoque de alguma peça na linha de produção esteja baixo, envia
+      # uma mensagem solicitando reposição da peça {part_index} para o almoxarifado
+      if (self.frabrica1[remetente][part_index] < production_threshold and not solicita_almoxarifado[remetente][part_index]):
+        # marca uma solicitação da peça 'part_index' pela linha 'remetente'
+        solicita_almoxarifado[remetente][part_index] = 1
+
+        # serializa a tupla das informações da mensagem e envia pro almoxarifado
+        data = json.dumps((remetente, "almoxarifado", sa_code, part_index, quantidade))
+        self.client.publish(topic_monitor, data)
+
+        print(f'> Estoque da peça {part_index} baixo na linha {remetente} -> pedido de reposição para o almoxarifado\n')
+
     
     # recebeu uma mensagem de resposta de reposição vinda do almoxarifado
-    elif code == str(ra_code):
-        part_index, quantidade = data.split(',')
-        part_index = int(part_index)
-        quantidade = int(quantidade)
+    elif code == ra_code:
+      # atualiza os dados de estoque do almoxarifado e da fábrica
+      solicita_almoxarifado[destinatario][part_index] = 0
+      estoque_almoxarifado[part_index] -= quantidade
+      estoque_fabrica[destinatario][part_index] += quantidade
 
-        # atualiza os dados de estoque do almoxarifado e da fábrica
-        solicita_almoxarifado[part_index] = 0
-        estoque_pecas[part_index] += quantidade
-        estoque_pecas_almoxarife[part_index] -= quantidade
+      # replica a mensagem para a fábrica
+      data = json.dumps((remetente, destinatario, code, part_index, quantidade))
+      self.client.publish(topic_monitor, data)
 
-        # replica a mensagem para a fábrica
-        self.client.publish(topic_monitor, f"{ra_code}:{part_index},{quantidade}")
+      # Verifica se o nível de estoque dessa peça no almoxarifado está baixa
+      if(estoque_almoxarifado[part_index] < almoxarife_threshold and not solicita_fornecedor[part_index]):
+        data = json.dumps((self.name, "fornecedor", sf_code, part_index, 10))
+        self.client.publish(topic_monitor, data)
 
-        # Verifica se o nível de estoque dessa peça no almoxarifado está baixa
-        if(estoque_pecas_almoxarife[part_index] < almoxarife_threshold and not solicita_fornecedor[part_index]):
-            print(f'> Estoque da peça {part_index} baixo -> pedido de reposição para o fornecedor\n')
-            self.client.publish(topic_monitor, f"{sf_code}:{part_index},{10}")
-            solicita_fornecedor[part_index] = 1
-
-        print(f'Notificação de reposição Almoxarifado -> fábrica: peça {part_index}, quantidade {quantidade}')
+        solicita_fornecedor[part_index] = 1
+        print(f'> Estoque da peça {part_index} baixo -> pedido de reposição para o fornecedor\n')
+      print(f'Notificação de reposição Almoxarifado -> fábrica: peça {part_index}, quantidade {quantidade}')
 
     # recebeu uma mensagem de resposta de reposição vinda do fornecedor
-    elif code and rf_code:
-        part_index, quantidade = data.split(',')
-        part_index = int(part_index)
-        quantidade = int(quantidade)
+    elif code == rf_code:
+      # atualiza os dados de estoque do almoxarifado
+      solicita_fornecedor[part_index] = 0
+      print(solicita_fornecedor)
+      estoque_almoxarifado[part_index] += quantidade
 
-        # atualiza os dados de estoque do almoxarifado
-        solicita_fornecedor[part_index] = 0
-        estoque_pecas_almoxarife[part_index] += quantidade
+      # replica a mensagem para o almoxarifado
+      data = json.dumps((remetente, destinatario, code, part_index, quantidade))
+      self.client.publish(topic_monitor, data)
 
-        # replica a mensagem para o almoxarifado
-        self.client.publish(topic_monitor, f"{rf_code}:{part_index},{quantidade}")
-        print(f'Notificação de reposição fornecedor -> almoxarifado: peça {part_index}, quantidade {quantidade}')
+      print(f'Notificação de reposição fornecedor -> almoxarifado: peça {part_index}, quantidade {quantidade}')
         
     
   def start(self):
