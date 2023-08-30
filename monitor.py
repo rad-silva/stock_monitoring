@@ -12,7 +12,6 @@ Lembre-se de ativar o Mosquitto antes de executar a aplicação
 from utils import *
 import paho.mqtt.client as mqtt
 import json
-import time
 
 
 class Monitor:

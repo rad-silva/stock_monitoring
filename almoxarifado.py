@@ -55,22 +55,23 @@ class Almoxarifado:
   def action_reposicao(self):
     while(True):
       #print("Reposição de estoque almoxarifado -> fábrica:")
-      time.sleep(5)  # aguarda caso apareça novas solicitações
+      time.sleep(3)  # aguarda caso apareça novas solicitações
 
       for part_index, linha in enumerate(self.lista_reposicao):
         if (estoque_almoxarifado[part_index] > 0):
           # para cada linha de produção que solicitou reposição de 'part_index'
           for linha_name in linha:
-            # decrementa o estoque do almoxarifado
-            quantidade = min(estoque_pecas[part_index], max_stock_fabrica)
-            estoque_almoxarifado[part_index] -= quantidade
+            if (estoque_almoxarifado[part_index] > 0):
+              # decrementa o estoque do almoxarifado
+              quantidade = min(estoque_pecas[part_index], max_stock_fabrica)
+              estoque_almoxarifado[part_index] -= quantidade
 
-            # remove o pedido da 'linha l'
-            self.lista_reposicao[part_index].remove(linha_name)
+              # remove o pedido da 'linha l'
+              self.lista_reposicao[part_index].remove(linha_name)
 
-            data = json.dumps((self.name, linha_name, ra_code, part_index, quantidade))
-            self.client.publish(topic_estoque, data)
-            print(f" - envio de peça {part_index} para {linha_name}\n")
+              data = json.dumps((self.name, linha_name, ra_code, part_index, quantidade))
+              self.client.publish(topic_estoque, data)
+              print(f" - envio de peça {part_index} para {linha_name}")
         else :
           print(f'falta de peça {part_index}\n')
         

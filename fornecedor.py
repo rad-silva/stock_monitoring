@@ -34,7 +34,7 @@ class Fornecedor:
     # recebeu uma mensagem de solicitação de reposição vinda do almoxarifado/monitor
     if code == sf_code:
       # Considera um tempo de entrega
-      time.sleep(random.randint(1,8))
+      time.sleep(random.randint(1,2))
 
       # envia resposta de entrega
       data = json.dumps((self.name, "almoxarifado", rf_code, part_index, quantidade))

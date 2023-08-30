@@ -30,7 +30,7 @@ estoque_fabrica = {
 }
 
 # estoque de peças do almoxarifado
-estoque_almoxarifado = [20] * num_pecas
+estoque_almoxarifado = [30] * num_pecas
 
 # gera uma lista de peças utilizadas na montagem de um produto
 # por simplicidade, vamos considerar que cada peça deve ser utilizada na ordem de seu índice
