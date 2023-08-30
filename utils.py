@@ -6,6 +6,7 @@ sa_code = 2 # solicitação de reposição almoxarife
 sf_code = 3 # solicitação de reposição fornecedor 
 ra_code = 4 # resposta de de reposição almoxarife
 rf_code = 5 # resposta de de reposição forncedor
+fp_code = 6 # 
 
 # Tópicos para receber e enviar dados ao monitor
 topic_monitor = 'topic/monitor'

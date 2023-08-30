@@ -11,6 +11,7 @@ Lembre-se de ativar o Mosquitto antes de executar a aplicação
 
 from utils import *
 import paho.mqtt.client as mqtt
+import time
 import json
 
 
@@ -91,10 +92,20 @@ class Monitor:
 
       print(f'Notificação de reposição fornecedor -> almoxarifado: peça {part_index}, quantidade {quantidade}')
         
-    
+  
+  def prod_puxada(self):
+    produtos = [random.randint(1, 5) for _ in range(5)]
+
+    data = json.dumps((self.name, "fabrica2", fp_code, produtos))
+    self.client.publish(topic_monitor, data)
+
+
+
   def start(self):
     try:
       self.client.loop_forever()
+      time.sleep(8)
+      self.prod_puxada()
     except KeyboardInterrupt:
       self.client.loop_stop()
       self.client.disconnect()

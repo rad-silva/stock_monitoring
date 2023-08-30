@@ -1,38 +1,27 @@
-# multiproc_test.py
-
 import random
-import multiprocessing
 
+demanda = [random.randint(1,9) for i in range(5)]
+lotes = []
 
-def list_append(count, id, out_list):
-    """
-    Creates an empty list and then appends a 
-    random number to the list 'count' number
-    of times. A CPU-heavy operation!
-    """
-    for i in range(count):
-        out_list.append(random.random())
+for i in range(len(demanda)):
+  lotes.append((i, demanda[i]))
 
-if __name__ == "__main__":
-  size = 10000000   # Number of random numbers to add
-  procs = 2   # Number of processes to create
+lotes.sort(key=lambda x: x[1])
 
-  # Create a list of jobs and then iterate through
-  # the number of processes appending each process to
-  # the job list 
-  jobs = []
-  for i in range(0, procs):
-      out_list = list()
-      process = multiprocessing.Process(target=list_append, 
-                                        args=(size, i, out_list))
-      jobs.append(process)
+print(demanda)
+print(lotes)
 
-  # Start the processes (i.e. calculate the random number lists)      
-  for j in jobs:
-      j.start()
+distribuicao = [(0,0)] * 8
 
-  # Ensure all of the processes have finished
-  for j in jobs:
-    j.join()
+for i in range(0, 5):
+  if (i > 1):
+    if (lotes[i][1] % 2 == 0):
+      distribuicao[i] = (lotes[i][0], lotes[i][1] // 2)
+      distribuicao[i+3] = (lotes[i][0], lotes[i][1] // 2)
+    else:
+      distribuicao[i] = (lotes[i][0], (lotes[i][1] // 2) + 1)
+      distribuicao[i+3] = (lotes[i][0], lotes[i][1] // 2)
+  else:
+    distribuicao[i] = lotes[i]
 
-  print("List processing complete.")
+print(distribuicao)
