@@ -11,6 +11,7 @@ fp_code = 6 #
 # Tópicos para receber e enviar dados ao monitor
 topic_monitor = 'topic/monitor'
 topic_estoque = 'topic/estoque'
+topic_dashboard = 'topic/dashboard'
 
 max_stock_fabrica = 10
 

@@ -41,6 +41,15 @@ class Monitor:
       'l13' : estoque_pecas,
     }
 
+    self.estoque_data = []
+    self.max_estoque = [20] * num_pecas
+    self.label = [''] * num_pecas
+
+
+  def send_msg(self, remetente, destinatario, code, part_index, quantidade):
+    data = json.dumps((remetente, destinatario, code, part_index, quantidade))
+    self.client.publish(topic_monitor, data)
+
 
   def on_connect(self, client, userdata, flags, rc):
     print(f"{self.name} conectado ao broker")
@@ -61,9 +70,8 @@ class Monitor:
         # marca uma solicitação da peça 'part_index' pela linha 'remetente'
         solicita_almoxarifado[remetente][part_index] = 1
 
-        # serializa a tupla das informações da mensagem e envia pro almoxarifado
-        data = json.dumps((remetente, "almoxarifado", sa_code, part_index, quantidade))
-        self.client.publish(topic_monitor, data)
+        #  envia pro almoxarifado
+        self.send_msg(remetente, "almoxarifado", sa_code, part_index, quantidade)
 
         print(f'> Estoque da peça {part_index} baixo na linha {remetente} -> pedido de reposição para o almoxarifado\n')
 
@@ -76,15 +84,14 @@ class Monitor:
       estoque_fabrica[destinatario][part_index] += quantidade
 
       # replica a mensagem para a fábrica
-      data = json.dumps((remetente, destinatario, code, part_index, quantidade))
-      self.client.publish(topic_monitor, data)
+      self.send_msg(remetente, destinatario, code, part_index, quantidade)
 
       # Verifica se o nível de estoque dessa peça no almoxarifado está baixa
       if(estoque_almoxarifado[part_index] < almoxarife_threshold and not solicita_fornecedor[part_index]):
-        data = json.dumps((self.name, "fornecedor", sf_code, part_index, 10))
-        self.client.publish(topic_monitor, data)
-
+        self.send_msg(self.name, "fornecedor", sf_code, part_index, 10)
         solicita_fornecedor[part_index] = 1
+        self.estoque_data[2][part_index] = 'red'
+
         print(f'> Estoque da peça {part_index} baixo -> pedido de reposição para o fornecedor\n')
       print(f'Notificação de reposição Almoxarifado -> fábrica: peça {part_index}, quantidade {quantidade}')
 
@@ -95,26 +102,41 @@ class Monitor:
       print(solicita_fornecedor)
       estoque_almoxarifado[part_index] += quantidade
 
+      if(estoque_almoxarifado[part_index] > almoxarife_threshold):
+        self.estoque_data[2][part_index] = 'green'
+
       # replica a mensagem para o almoxarifado
-      data = json.dumps((remetente, destinatario, code, part_index, quantidade))
-      self.client.publish(topic_monitor, data)
+      self.send_msg(remetente, destinatario, code, part_index, quantidade)
 
       print(f'Notificação de reposição fornecedor -> almoxarifado: peça {part_index}, quantidade {quantidade}')
         
   
   def prod_puxada(self):
     produtos = [random.randint(1, 5) for _ in range(5)]
-    data = json.dumps((self.name, "fabrica2", fp_code, produtos))
-    self.client.publish(topic_monitor, data)
+    self.send_msg(self.name, "fabrica2", fp_code, produtos, 0)
 
+  def dash(self):
+    while(True):
+      time.sleep(1)
 
+      for i in range(num_pecas):
+        if(estoque_almoxarifado[i] > almoxarife_threshold):
+          self.label[i] = 'green'
+        else:
+          self.label[i] = 'red'
+
+      self.estoque_data.append(self.max_estoque)
+      self.estoque_data.append(estoque_almoxarifado)
+      self.estoque_data.append(self.label)
+
+      data = json.dumps(self.estoque_data)
+      self.client.publish(topic_dashboard, data)
 
   def start(self):
     try:
       self.prod_puxada()
-      self.client.loop_forever()
-      time.sleep(8)
-      
+      self.client.loop_start()
+      self.dash()
       
     except KeyboardInterrupt:
       self.client.loop_stop()

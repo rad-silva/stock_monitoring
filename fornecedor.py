@@ -5,7 +5,6 @@ Fornecedor:
 - Fica a critério do monitor checar o nível de estoque no almoxarifado e solicitar peças aos fornecedores
 - Pode entregar uma ou mais peças de uma vez
 '''
-# teste
 
 from utils import *
 import paho.mqtt.client as mqtt

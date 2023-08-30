@@ -16,7 +16,6 @@ Fábrica:
 from utils import *
 import paho.mqtt.client as mqtt
 import threading
-import multiprocessing
 import time
 import sys
 import json

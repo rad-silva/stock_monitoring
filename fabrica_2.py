@@ -120,7 +120,7 @@ class Fabrica2:
   # Função de callback para quando uma mensagem for recebida
   def on_message(self, client, userdata, msg):
     data_json = msg.payload.decode("utf-8")
-    remetente, destinatario, code, demanda = json.loads(data_json)
+    remetente, destinatario, code, demanda, quantidade = json.loads(data_json)
 
     if (code == fp_code):
       self.demanda = demanda
