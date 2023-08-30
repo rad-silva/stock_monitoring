@@ -30,6 +30,15 @@ class Monitor:
       'l3' : estoque_pecas,
       'l4' : estoque_pecas,
       'l5' : estoque_pecas,
+  
+      'l6' : estoque_pecas,
+      'l7' : estoque_pecas,
+      'l8' : estoque_pecas,
+      'l9' : estoque_pecas,
+      'l10' : estoque_pecas,
+      'l11' : estoque_pecas,
+      'l12' : estoque_pecas,
+      'l13' : estoque_pecas,
     }
 
 
@@ -95,7 +104,6 @@ class Monitor:
   
   def prod_puxada(self):
     produtos = [random.randint(1, 5) for _ in range(5)]
-
     data = json.dumps((self.name, "fabrica2", fp_code, produtos))
     self.client.publish(topic_monitor, data)
 
@@ -103,9 +111,11 @@ class Monitor:
 
   def start(self):
     try:
+      self.prod_puxada()
       self.client.loop_forever()
       time.sleep(8)
-      self.prod_puxada()
+      
+      
     except KeyboardInterrupt:
       self.client.loop_stop()
       self.client.disconnect()

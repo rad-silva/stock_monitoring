@@ -107,6 +107,7 @@ class Fabrica2:
     try:
       self.client.loop_forever()
     except Exception as e:
+        print(e)
         self.client.loop_stop()
         self.client.disconnect()
         print(f"Conexão {self.name} encerrada!")
@@ -123,9 +124,11 @@ class Fabrica2:
 
     if (code == fp_code):
       self.demanda = demanda
-      self.administration()
+      if(demanda != []):
+        self.administration()
       print()
 
+      
 
   def administration(self):
     print(type(self.administration))
@@ -164,7 +167,7 @@ class Fabrica2:
     threads = []
 
     for i in range(len(self.demanda)):
-      thread = threading.Thread(target=linha_prod[i].product_assembly, args=(prod_name[i], produtos[distribuicao[i][0]], self.demanda[i][1]))
+      thread = threading.Thread(target=linha_prod[i].product_assembly, args=(prod_name[i], produtos[distribuicao[i][0]], distribuicao[i][1]))
       threads.append(thread)
 
     # Coloca as linhas de produção para trabalharem simultaneamente
@@ -184,4 +187,4 @@ class Fabrica2:
 #
 # Inicializa objeto da fabrica
 fabrica = Fabrica2("fabrica2")
-# fabrica.administration()
+

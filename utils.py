@@ -28,6 +28,14 @@ estoque_fabrica = {
   'l3' : [10] * num_pecas,
   'l4' : [10] * num_pecas,
   'l5' : [10] * num_pecas,
+  'l6' : [10] * num_pecas,
+  'l7' : [10] * num_pecas,
+  'l8' : [10] * num_pecas,
+  'l9' : [10] * num_pecas,
+  'l10' : [10] * num_pecas,
+  'l11' : [10] * num_pecas,
+  'l12' : [10] * num_pecas,
+  'l13' : [10] * num_pecas,
 }
 
 # estoque de peças do almoxarifado
@@ -63,6 +71,14 @@ solicita_almoxarifado = {
   'l3' : [0] * num_pecas,
   'l4' : [0] * num_pecas,
   'l5' : [0] * num_pecas,
+  'l6' : [0] * num_pecas,
+  'l7' : [0] * num_pecas,
+  'l8' : [0] * num_pecas,
+  'l9' : [0] * num_pecas,
+  'l10' : [0] * num_pecas,
+  'l11' : [0] * num_pecas,
+  'l12' : [0] * num_pecas,
+  'l13' : [0] * num_pecas,
 }
 
 prod_name = ['pv1', 'pv2', 'pv3', 'pv4', 'pv5']
