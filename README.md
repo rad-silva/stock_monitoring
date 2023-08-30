@@ -1,5 +1,5 @@
 # stock_monitoring
-Uma aplicação de gerenciamento de estoque para uma fábrica de montagem de produtos.
+Um sistema de monitoramento e controle de estoque de peças em linhas de produção
 
 # Colaboradores
  Brainer Sueverti: [hiperbrainer](https://github.com/hiperbrainer) 
