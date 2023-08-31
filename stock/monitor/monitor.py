@@ -23,7 +23,7 @@ topic_monitor = 'topic/monitor'
 topic_estoque = 'topic/estoque'
 topic_dashboard = 'topic/dashboard'
 
-max_stock_fabrica = 10
+max_stock_fabrica = 50
 
 # número de peças diferentes que a fábrica utiliza
 num_pecas = 10
@@ -34,23 +34,23 @@ num_pecas_varia = 3
 estoque_pecas = [10] * num_pecas
 
 estoque_fabrica = {
-  'l1' : [10] * num_pecas,
-  'l2' : [10] * num_pecas,
-  'l3' : [10] * num_pecas,
-  'l4' : [10] * num_pecas,
-  'l5' : [10] * num_pecas,
-  'l6' : [10] * num_pecas,
-  'l7' : [10] * num_pecas,
-  'l8' : [10] * num_pecas,
-  'l9' : [10] * num_pecas,
-  'l10' : [10] * num_pecas,
-  'l11' : [10] * num_pecas,
-  'l12' : [10] * num_pecas,
-  'l13' : [10] * num_pecas,
+  'l1' : [max_stock_fabrica] * num_pecas,
+  'l2' : [max_stock_fabrica] * num_pecas,
+  'l3' : [max_stock_fabrica] * num_pecas,
+  'l4' : [max_stock_fabrica] * num_pecas,
+  'l5' : [max_stock_fabrica] * num_pecas,
+  'l6' : [max_stock_fabrica] * num_pecas,
+  'l7' : [max_stock_fabrica] * num_pecas,
+  'l8' : [max_stock_fabrica] * num_pecas,
+  'l9' : [max_stock_fabrica] * num_pecas,
+  'l10' : [max_stock_fabrica] * num_pecas,
+  'l11' : [max_stock_fabrica] * num_pecas,
+  'l12' : [max_stock_fabrica] * num_pecas,
+  'l13' : [max_stock_fabrica] * num_pecas,
 }
 
 # estoque de peças do almoxarifado
-estoque_almoxarifado = [30] * num_pecas
+estoque_almoxarifado = [100] * num_pecas
 
 # gera uma lista de peças utilizadas na montagem de um produto
 # por simplicidade, vamos considerar que cada peça deve ser utilizada na ordem de seu índice
@@ -67,7 +67,8 @@ pv5 = kit_base + [random.randint(1, 6) if random.choice([True, False]) else 0 fo
 timer = [random.randint(1, 5)/10 for _ in range(num_pecas)]
 
 # define um limiar para a quantidade de peças viável 
-almoxarife_threshold = 8
+almoxarife_threshold = 10
+almoxarife_baseline = 30
 production_threshold = 5
 
 # estoque de peças do almoxarifado
@@ -180,6 +181,8 @@ class Monitor:
 
         print(f'> Estoque da peça {part_index} baixo -> pedido de reposição para o fornecedor\n')
       print(f'Notificação de reposição Almoxarifado -> fábrica: peça {part_index}, quantidade {quantidade}')
+      if(estoque_almoxarifado[part_index] < almoxarife_baseline ):
+        self.estoque_data[2][part_index] = 'yellow'
 
     # recebeu uma mensagem de resposta de reposição vinda do fornecedor
     elif code == rf_code:
@@ -188,8 +191,11 @@ class Monitor:
       print(solicita_fornecedor)
       estoque_almoxarifado[part_index] += quantidade
 
-      if(estoque_almoxarifado[part_index] > almoxarife_threshold):
+      if(estoque_almoxarifado[part_index] > almoxarife_threshold ):
         self.estoque_data[2][part_index] = 'green'
+
+      elif(estoque_almoxarifado[part_index] > almoxarife_baseline):
+        self.estoque_data[2][part_index] = 'yellow'
 
       # replica a mensagem para o almoxarifado
       self.send_msg(remetente, destinatario, code, part_index, quantidade)
