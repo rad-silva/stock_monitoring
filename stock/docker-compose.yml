@@ -1,0 +1,57 @@
+version: '3'
+services:
+
+  mosquitto:
+      image: eclipse-mosquitto:2
+      ports:
+          - 1883:1883
+          - 8883:8883
+          - 9001:9001
+      volumes:
+          - ./mosquitto/config:/mosquitto/config
+          - ./mosquitto/data:/mosquitto/data
+      networks:
+          - mosquitto
+
+  fabrica_1:
+    build:
+      context: ./fabrica_1  # Caminho para a pasta da entidade Fábrica
+    networks:
+      - mosquitto
+
+  fabrica_2:
+    build:
+      context: ./fabrica_2  # Caminho para a pasta da entidade Fábrica
+
+    networks:
+      - mosquitto
+
+  almoxarifado:
+    build:
+      context: ./almoxarifado  # Caminho para a pasta da entidade Almoxarifado
+
+    networks:
+      - mosquitto
+
+  fornecedor:
+    build:
+      context: ./fornecedor  # Caminho para a pasta da entidade Fornecedor
+    networks:
+      - mosquitto
+
+  monitor:
+    build:
+      context: ./monitor  
+    networks:
+      - mosquitto
+
+  dashboard:
+    build:
+      context: ./dashboard  
+    networks:
+      - mosquitto
+
+networks:
+  mosquitto:
+    name: mosquitto
+    driver: bridge
